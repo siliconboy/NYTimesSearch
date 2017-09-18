@@ -1,15 +1,20 @@
-package com.codepath.nytimessearch;
+package com.codepath.nytimessearch.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 
+import com.codepath.nytimessearch.R;
+import com.codepath.nytimessearch.adapters.ArticleArrayAdapter;
+import com.codepath.nytimessearch.models.Article;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
@@ -17,6 +22,8 @@ import com.loopj.android.http.RequestParams;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -27,6 +34,8 @@ public class SearchActivity extends AppCompatActivity {
     EditText etQuery;
     GridView gvResults;
     Button btnSearch;
+    ArrayList<Article> articles;
+    ArticleArrayAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +52,24 @@ public class SearchActivity extends AppCompatActivity {
         etQuery =  findViewById(R.id.etQuery);
         gvResults =  findViewById(R.id.gvResults);
         btnSearch =  findViewById(R.id.btnSearch);
+        articles = new ArrayList<>();
+        adapter = new ArticleArrayAdapter(this,articles);
+
+        gvResults.setAdapter(adapter);
+
+        gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                //create intent
+                Intent intent = new Intent(getApplicationContext(), ArticleActivity.class);
+                //get article
+                Article article = articles.get(i);
+
+                intent.putExtra("article", article);
+                //launch
+                startActivity(intent);
+            }
+        });
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -84,7 +111,10 @@ public class SearchActivity extends AppCompatActivity {
 
                 try {
                     articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                    log.d("DEBUG", articleJsonResults.toString());
+
+                    adapter.addAll(Article.fromJSONArray(articleJsonResults));
+                   // adapter.notifyDataSetChanged();
+                    log.d("DEBUG", articles.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
