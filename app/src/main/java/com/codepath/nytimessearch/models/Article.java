@@ -1,18 +1,22 @@
 package com.codepath.nytimessearch.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by yingbwan on 9/17/2017.
  */
 
-public class Article implements Serializable {
+public class Article implements Parcelable {
     String webUrl;
+    String headline;
+    String thumbnail;
 
     public String getWebUrl() {
         return webUrl;
@@ -25,9 +29,6 @@ public class Article implements Serializable {
     public String getThumbnail() {
         return thumbnail;
     }
-
-    String headline;
-    String thumbnail;
 
     public Article(JSONObject jsonObject) {
         try {
@@ -58,4 +59,33 @@ public class Article implements Serializable {
         return results;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.webUrl);
+        dest.writeString(this.headline);
+        dest.writeString(this.thumbnail);
+    }
+
+    protected Article(Parcel in) {
+        this.webUrl = in.readString();
+        this.headline = in.readString();
+        this.thumbnail = in.readString();
+    }
+
+    public static final Parcelable.Creator<Article> CREATOR = new Parcelable.Creator<Article>() {
+        @Override
+        public Article createFromParcel(Parcel source) {
+            return new Article(source);
+        }
+
+        @Override
+        public Article[] newArray(int size) {
+            return new Article[size];
+        }
+    };
 }
