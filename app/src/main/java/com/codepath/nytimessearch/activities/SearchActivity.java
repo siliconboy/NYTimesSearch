@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.customtabs.CustomTabsIntent;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -60,8 +61,9 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
     final String BASE_URL = "http://api.nytimes.com/svc/search/v2/";
     @BindView(R.id.rvResults)
     RecyclerView rvResults;
-    @BindView(R.id.search_layout)
+    @BindView(R.id.searchLayout)
     RelativeLayout searchLayout;
+
     ArrayList<Doc> articles;
 
     DocRecyclerAdapter adapter;
@@ -83,7 +85,8 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         setupViews();
 
         if (NetworkUtils.isNetworkAvailable(this) || NetworkUtils.isOnline()) {
-            Toast.makeText(this, "Network is not available. please enable it.", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, "Network is not available. please enable it.", Toast.LENGTH_LONG).show();
+            Snackbar.make(searchLayout, R.string.net_error, Snackbar.LENGTH_LONG).show();
         }
         filter = new Filter();
         //initialize Retrofit
@@ -297,8 +300,8 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                 int statusCode = response.code();
                 Log.d("DEBUG", "response code:" + String.valueOf(statusCode));
                 //Log.d("DEBUG", "body:" + response.toString());
-                if (statusCode != 200) {
-                    Toast.makeText(SearchActivity.this, "Search failed!", Toast.LENGTH_LONG).show();
+                if (!response.isSuccessful()) {
+                    Toast.makeText(SearchActivity.this, R.string.search_err, Toast.LENGTH_LONG).show();
 
                     return;
                 }
@@ -318,7 +321,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                     progressDialog.dismiss();
                 }
                 if (articles.isEmpty()) {
-                    Toast.makeText(SearchActivity.this, "No result found!!!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(SearchActivity.this, R.string.no_doc, Toast.LENGTH_LONG).show();
                 } else {
                     currentPage++;
                 }
@@ -326,7 +329,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
 
             @Override
             public void onFailure(Call<QueryResult> call, Throwable t) {
-                Toast.makeText(SearchActivity.this, "could not load content. check your network!", Toast.LENGTH_LONG).show();
+                Toast.makeText(SearchActivity.this, R.string.no_content, Toast.LENGTH_LONG).show();
                 // Log error here since request failed
             }
         });

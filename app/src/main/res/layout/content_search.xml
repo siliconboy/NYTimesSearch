@@ -8,8 +8,8 @@
     android:paddingBottom="16dp"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
-    android:id="@+id/search_layout"
     android:background="@drawable/nytlogo"
+    android:id="@+id/searchLayout"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.codepath.nytimessearch.activities.SearchActivity"
     tools:showIn="@layout/activity_search">
