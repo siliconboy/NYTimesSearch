@@ -1,7 +1,6 @@
 package com.codepath.nytimessearch.adapters;
 
 import android.content.Context;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,12 +11,10 @@ import android.widget.TextView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.codepath.nytimessearch.R;
-import com.codepath.nytimessearch.models.Article;
-import com.codepath.nytimessearch.models.Image;
-import com.codepath.nytimessearch.utils.ArticleDiffCallback;
+import com.codepath.nytimessearch.models.Doc;
+import com.codepath.nytimessearch.models.Multimedium;
 import com.codepath.nytimessearch.utils.GlideApp;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -33,10 +30,10 @@ import butterknife.ButterKnife;
 public class ArticleRecyclerAdapter extends RecyclerView.Adapter<ArticleRecyclerAdapter.ViewHolder> {
 
     Context mContext;
-    List<Article> mArticles;
+    List<Doc> mArticles;
+    final String IMAGE_BASE ="http://www.nytimes.com/";
 
-
-    public ArticleRecyclerAdapter(Context context, List<Article> articles){
+    public ArticleRecyclerAdapter(Context context, List<Doc> articles){
 
         mContext = context;
         mArticles = articles;
@@ -57,23 +54,23 @@ public class ArticleRecyclerAdapter extends RecyclerView.Adapter<ArticleRecycler
 
     @Override
     public void onBindViewHolder(ArticleRecyclerAdapter.ViewHolder holder, int position) {
-            Article article = mArticles.get(position);
+            Doc article = mArticles.get(position);
 
             // set item
         TextView tvTitle = holder.tvTitle;
-        tvTitle.setText(article.getHeadline());
+        tvTitle.setText(article.getHeadline().getMain());
         TextView tvCategory = holder.tvCategory;
-        tvCategory.setText(article.getNewsDesk());
+        tvCategory.setText(article.getNewDesk());
         TextView tvSnippet = holder.tvSnippet;
         tvSnippet.setText(article.getSnippet());
 
         ImageView ivImage = holder.ivImage;
         ivImage.setImageResource(0);
-        ArrayList<Image> images = article.getImages();
+        List<Multimedium> images = article.getMultimedia();
         String thumbnail ="";
         if(images !=null && images.size()>0){
             Random rd = new Random();
-            thumbnail = images.get(rd.nextInt(images.size())).getUrl();
+            thumbnail = IMAGE_BASE + images.get(rd.nextInt(images.size())).getUrl();
         }
       //  String thumbnail = article.getImages().get(0).getUrl();
         if(!TextUtils.isEmpty(thumbnail)) {
@@ -92,17 +89,6 @@ public class ArticleRecyclerAdapter extends RecyclerView.Adapter<ArticleRecycler
         GlideApp.with(getContext()).clear(holder.ivImage);
     }
 
-    public void swapItems(List<Article> articles) {
-        // compute diffs
-        final ArticleDiffCallback diffCallback = new ArticleDiffCallback(this.mArticles, articles);
-        final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
-
-        // clear contacts and add
-        this.mArticles.clear();
-        this.mArticles.addAll(articles);
-
-        diffResult.dispatchUpdatesTo(this); // calls adapter's notify methods after diff is computed
-    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
        @BindView(R.id.tvTitle) public TextView tvTitle;
@@ -115,9 +101,7 @@ public class ArticleRecyclerAdapter extends RecyclerView.Adapter<ArticleRecycler
             // as this ensures that the imageView field is populated.
             super(view);
             ButterKnife.bind(this, view);
-            // Perform other view lookups.
-           // tvTitle = (TextView) view.findViewById(R.id.tvTitle);
-           // ivImage = (ImageView) view.findViewById(R.id.ivImage);
+
         }
     }
 

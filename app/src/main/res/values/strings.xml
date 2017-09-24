@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">NYTimesSearch</string>
     <string name="title">NY Times</string>
-    <string name="action_settings">Settings</string>
+    <string name="filter">Filter</string>
     <string name="hint">enter search query</string>
     <string name="search">Search</string>
     <string name="title_activity_article">Article</string>

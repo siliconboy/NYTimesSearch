@@ -25,6 +25,7 @@
         android:maxLines="2"
         android:ellipsize="end"
         android:textColor="@android:color/black"
+        android:padding="2sp"
         tools:text="title" />
     <TextView
         android:layout_width="wrap_content"
@@ -32,6 +33,7 @@
         android:id="@+id/tvCategory"
         android:textAlignment="center"
         tools:text="category"
+        android:padding="2sp"
         android:background="@android:color/holo_blue_bright"/>
     <TextView
         android:id="@+id/tvSnippet"
@@ -39,6 +41,7 @@
         android:layout_height="wrap_content"
         android:maxLines="4"
         android:ellipsize="end"
+        android:padding="2sp"
         android:textColor="@android:color/darker_gray"
         tools:text="content"
         />

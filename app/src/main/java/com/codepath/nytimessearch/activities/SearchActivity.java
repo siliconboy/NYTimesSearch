@@ -1,5 +1,6 @@
 package com.codepath.nytimessearch.activities;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,68 +15,87 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.codepath.nytimessearch.R;
 import com.codepath.nytimessearch.adapters.ArticleRecyclerAdapter;
 import com.codepath.nytimessearch.adapters.EndlessRecyclerViewScrollListener;
 import com.codepath.nytimessearch.fragments.FilterFragment;
 import com.codepath.nytimessearch.interfaces.FilterDialogListener;
-import com.codepath.nytimessearch.models.Article;
+import com.codepath.nytimessearch.interfaces.SearchApiEndpointInterface;
+import com.codepath.nytimessearch.models.Doc;
 import com.codepath.nytimessearch.models.Filter;
+import com.codepath.nytimessearch.models.QueryResult;
+import com.codepath.nytimessearch.networks.NetworkUtils;
 import com.codepath.nytimessearch.utils.ItemClickSupport;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import cz.msebera.android.httpclient.Header;
-
-import static com.loopj.android.http.AsyncHttpClient.log;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SearchActivity extends AppCompatActivity implements FilterDialogListener {
 
-    private EndlessRecyclerViewScrollListener scrollListener;
-
-    @BindView(R.id.rvResults) RecyclerView rvResults;
-
-    ArrayList<Article> articles;
+    final String BASE_URL = "http://api.nytimes.com/svc/search/v2/";
+    @BindView(R.id.rvResults)
+    RecyclerView rvResults;
+    @BindView(R.id.search_layout)
+    RelativeLayout searchLayout;
+    ArrayList<Doc> articles;
     ArticleRecyclerAdapter adapter;
+    SearchApiEndpointInterface apiService;
     Filter filter;
-    AsyncHttpClient client;
-    final String url = "http://api.nytimes.com/svc/search/v2/articlesearch.json";
     int currentPage = 0;
     String query;
+    private EndlessRecyclerViewScrollListener scrollListener;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-        Toolbar toolbar =  findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ButterKnife.bind(this);
 
         setupViews();
+
+        if (NetworkUtils.isNetworkAvailable(this) || NetworkUtils.isOnline()) {
+            Toast.makeText(this, "Network is not available. please enable it.", Toast.LENGTH_LONG).show();
+        }
         filter = new Filter();
-        //create network client
-        client = new AsyncHttpClient();
+        //initialize Retrofit
+        Gson gson = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+                .create();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+        // simplified call to request the news with already initialized service
+        apiService = retrofit.create(SearchApiEndpointInterface.class);
+
     }
 
-    public void setupViews(){
-//        etQuery =  findViewById(R.id.etQuery);
-  //      rvResults =  findViewById(R.id.rvResults);
-    //    btnSearch =  findViewById(R.id.btnSearch);
-        articles = new ArrayList<>();
-        adapter = new ArticleRecyclerAdapter(this,articles);
+    public void setupViews() {
 
+        articles = new ArrayList<>();
+        adapter = new ArticleRecyclerAdapter(this, articles);
         rvResults.setAdapter(adapter);
-        StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
+
+        StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         rvResults.setLayoutManager(staggeredGridLayoutManager);
 
         // Retain an instance so that you can call `resetState()` for fresh searches
@@ -87,39 +107,24 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                 loadNextDataFromApi(page, view);
             }
         };
+
         // Adds the scroll listener to RecyclerView
         rvResults.addOnScrollListener(scrollListener);
 
         ItemClickSupport.addTo(rvResults).setOnItemClickListener(
-                new ItemClickSupport.OnItemClickListener() {
-                    @Override
-                    public void onItemClicked(RecyclerView recyclerView, int position, View v) {
-                        //create intent
-                        Intent intent = new Intent(getApplicationContext(), ArticleActivity.class);
-                        //get article
-                        Article article = articles.get(position);
-
-                        intent.putExtra("article", article);
-                        //launch
-                        startActivity(intent);
-                    }
+                (recyclerView, position, v) -> {
+                    //create intent
+                    Intent intent = new Intent(getApplicationContext(), ArticleActivity.class);
+                    //get article
+                    Doc article = articles.get(position);
+                    intent.putExtra("article", article);
+                    //launch activity
+                    startActivity(intent);
                 }
         );
-/*        rvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                //create intent
-                Intent intent = new Intent(getApplicationContext(), ArticleActivity.class);
-                //get article
-                Article article = articles.get(i);
 
-                intent.putExtra("article", article);
-                //launch
-                startActivity(intent);
-            }
-        });
-  */
     }
+
     // Append the next page of data into the adapter
     // This method probably sends out a network request and appends new data items to your adapter.
     public void loadNextDataFromApi(int offset, View view) {
@@ -129,64 +134,17 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         //  --> Append the new data objects to the existing set of items inside the array of items
         //  --> Notify the adapter of the new items made with `notifyItemRangeInserted()`
         final int curSize = adapter.getItemCount();
-//        articles.addAll(moreContacts);
-        final RequestParams params = buildParams(query, filter, currentPage);
 
         // Create the Handler object (on the main thread by default)
         Handler handler = new Handler();
-// Define the code block to be executed
-        Runnable runnableCode = new Runnable() {
-            @Override
-            public void run() {
-                // Do something here on the main thread
+        // Define the code block to be executed
+        Runnable runnableCode = () -> {
+            // load data using network api
+            fetchArticles(query, filter, currentPage, false);
 
-                client.get(url,params, new JsonHttpResponseHandler(){
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                        log.d("DEBUG", response.toString());
-                        JSONArray articleJsonResults;
-
-                        try {
-                            articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                            // add new data
-                            articles.addAll(Article.fromJSONArray(articleJsonResults));
-                            // Notify the adapter of the update
-                            adapter.notifyItemRangeInserted(curSize, articles.size() - 1);
-                            currentPage++;
-                            //Reset endless scroll listener when performing a new search
-                            scrollListener.resetState();
-                            log.d("DEBUG", articles.toString());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                        log.d("DEBUG",String.valueOf(statusCode));
-                        log.d("DEBUG",errorResponse.toString());
-                        super.onFailure(statusCode, headers, throwable, errorResponse);
-                    }
-                });
-
-
-                Log.d("Handlers", "Called on main thread");
-            }
         };
-// Run the above code block on the main thread after 2 seconds
-        handler.postDelayed(runnableCode, 2000);
-
-
-
-        view.post(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("viewpost", "post runnable executed");
-
-//                adapter.notifyItemRangeInserted(curSize, articles.size() - 1);
-            }
-        });
+        // Run the above code block on the main thread after 2 seconds
+        handler.postDelayed(runnableCode, 1000);
     }
 
     @Override
@@ -200,38 +158,12 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
             @Override
             public boolean onQueryTextSubmit(String qry) {
                 query = qry;
-                currentPage =0;
+                currentPage = 0;
+                //remove background
+                searchLayout.setBackgroundResource(0);
+                progressDialog = ProgressDialog.show(SearchActivity.this, "", "Loading Data");
 
-                RequestParams params = buildParams(query, filter, currentPage);
-                client.get(url,params, new JsonHttpResponseHandler(){
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                        log.d("DEBUG", response.toString());
-                        JSONArray articleJsonResults;
-
-                        try {
-                            articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                            //clear data with new search result.
-                            articles.clear();
-                            // add new data
-                            articles.addAll(Article.fromJSONArray(articleJsonResults));
-                            // Notify the adapter of the update
-                            adapter.notifyDataSetChanged();
-                            //Reset endless scroll listener when performing a new search
-                            scrollListener.resetState();
-                            log.d("DEBUG", articles.toString());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                        super.onFailure(statusCode, headers, throwable, errorResponse);
-                    }
-                });
-
+                fetchArticles(query, filter, currentPage, true);
                 // workaround to avoid issues with some emulators and keyboard devices firing twice if a keyboard enter is used
                 // see https://code.google.com/p/android/issues/detail?id=24599
                 searchView.clearFocus();
@@ -242,50 +174,11 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
             public boolean onQueryTextChange(String newText) {
                 return false;
             }
-
         });
 
         return super.onCreateOptionsMenu(menu);
     }
 
-    public RequestParams buildParams(String query, Filter ft, int page){
-        String sort = filter.getSort();
-        String beginDate = filter.getBeginDate();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("news_desk:(");
-        if(filter.getSports()) {
-            sb.append("\"Sports\"");
-        }
-        if(filter.getFashionStyle()) {
-            sb.append(" \"Fashion & Style\"");
-        }
-        if(filter.getArt()){
-            sb.append(" \"Arts\"");
-        }
-        sb.append(")");
-        if(!filter.getFashionStyle() && !filter.getArt() && !filter.getSports()){
-
-            sb.setLength(0);
-        }
-        String extraQuery =sb.toString();
-        // perform query here
-
-        RequestParams params = new RequestParams();
-        params.add("api-key","9a01eed7f83a4928bc5949886e052166");
-        params.add("page",String.valueOf(page));
-        params.add("q",query);
-        if(sort != null &&!sort.isEmpty()) {
-            params.add("sort", sort);
-        }
-        if(beginDate!=null && !beginDate.isEmpty()) {
-            params.add("begin_date", beginDate);
-        }
-        if(!extraQuery.isEmpty()) {
-            params.add("fq", extraQuery);
-        }
-        return params;
-    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -294,7 +187,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_filter) {
             FilterFragment filterFragment;
             FragmentManager fm = getSupportFragmentManager();
             filterFragment = FilterFragment.newInstance(filter);
@@ -307,6 +200,78 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
     @Override
     public void onFinishDialog(Filter ft) {
         filter = ft;
+    }
+
+    private void fetchArticles(final String query, Filter ft, int page, final boolean isNew) {
+        final String BASE_URL = "http://api.nytimes.com/svc/search/v2/";
+        Map<String, String> data = new HashMap<>();
+        data.put("api-key", "9a01eed7f83a4928bc5949886e052166");
+        data.put("page", String.valueOf(page));
+        data.put("q", query);
+
+        if (ft.getSort() != null && !ft.getSort().isEmpty()) {
+            data.put("sort", ft.getSort());
+        }
+        if (ft.getBeginDate() != null && ft.getBeginDate().isEmpty()) {
+            data.put("begin_date", ft.getBeginDate());
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("news_desk:(");
+        if (filter.getSports()) {
+            sb.append("\"Sports\"");
+        }
+        if (filter.getFashionStyle()) {
+            sb.append(" \"Fashion & Style\"");
+        }
+        if (filter.getArt()) {
+            sb.append(" \"Arts\"");
+        }
+        sb.append(")");
+        if (!filter.getFashionStyle() && !filter.getArt() && !filter.getSports()) {
+
+            sb.setLength(0);
+        }
+        String extraQuery = sb.toString();
+
+        if (!extraQuery.isEmpty()) {
+            data.put("fq", extraQuery);
+        }
+        //call Retrofit api
+        Call<QueryResult> call = apiService.getResult(data);
+
+
+            call.enqueue(new Callback<QueryResult>() {
+                @Override
+                public void onResponse(Call<QueryResult> call, Response<QueryResult> response) {
+                    int statusCode = response.code();
+                    Log.d("DEBUG", "response code:" + String.valueOf(statusCode));
+                    if (statusCode != 200) {
+                        Toast.makeText(SearchActivity.this, "Search failed!", Toast.LENGTH_LONG).show();
+
+                        return;
+                    }
+                    QueryResult queryResult = response.body();
+                    List<Doc> docs = queryResult.getResponse().getDocs();
+                    if (isNew) articles.clear();
+                    // add new data
+                    articles.addAll(docs);
+                    // Notify the adapter of the update
+                    adapter.notifyDataSetChanged();
+                    //Reset endless scroll listener when performing a new search
+                    if (isNew) {
+                        scrollListener.resetState();
+                        progressDialog.dismiss();
+                    }
+                    currentPage++;
+                }
+
+                @Override
+                public void onFailure(Call<QueryResult> call, Throwable t) {
+                    Toast.makeText(SearchActivity.this, "could not load content. check your network!", Toast.LENGTH_LONG).show();
+                    // Log error here since request failed
+                }
+            });
+
     }
 
 }

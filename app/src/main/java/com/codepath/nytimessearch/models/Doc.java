@@ -1,11 +1,14 @@
 package com.codepath.nytimessearch.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class Doc {
+public class Doc implements Parcelable {
 
     @SerializedName("web_url")
     @Expose
@@ -195,4 +198,66 @@ public class Doc {
         this.wordCount = wordCount;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.webUrl);
+        dest.writeString(this.snippet);
+       // dest.writeParcelable(this.blog, flags);
+        dest.writeString(this.source);
+      //  dest.writeList(this.multimedia);
+      //  dest.writeParcelable(this.headline, flags);
+      //  dest.writeList(this.keywords);
+        dest.writeString(this.pubDate);
+        dest.writeString(this.documentType);
+        dest.writeString(this.newDesk);
+        dest.writeString(this.sectionName);
+       // dest.writeParcelable(this.byline, flags);
+        dest.writeString(this.typeOfMaterial);
+        dest.writeString(this.id);
+        dest.writeFloat(this.score);
+        dest.writeString(this.printPage);
+        dest.writeInt(this.wordCount);
+    }
+
+    public Doc() {
+    }
+
+    protected Doc(Parcel in) {
+        this.webUrl = in.readString();
+        this.snippet = in.readString();
+      //  this.blog = in.readParcelable(Blog.class.getClassLoader());
+        this.source = in.readString();
+        //this.multimedia = new ArrayList<Multimedium>();
+       // in.readList(this.multimedia, Multimedium.class.getClassLoader());
+     //   this.headline = in.readParcelable(Headline.class.getClassLoader());
+      //  this.keywords = new ArrayList<Keyword>();
+      //  in.readList(this.keywords, Keyword.class.getClassLoader());
+        this.pubDate = in.readString();
+        this.documentType = in.readString();
+        this.newDesk = in.readString();
+        this.sectionName = in.readString();
+     //   this.byline = in.readParcelable(Byline.class.getClassLoader());
+        this.typeOfMaterial = in.readString();
+        this.id = in.readString();
+        this.score = in.readFloat();
+        this.printPage = in.readString();
+        this.wordCount = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Doc> CREATOR = new Parcelable.Creator<Doc>() {
+        @Override
+        public Doc createFromParcel(Parcel source) {
+            return new Doc(source);
+        }
+
+        @Override
+        public Doc[] newArray(int size) {
+            return new Doc[size];
+        }
+    };
 }

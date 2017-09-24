@@ -6,83 +6,93 @@
 
     <TextView
         android:id="@+id/tvDate"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:paddingTop="25dp"
+        android:textAlignment="center"
         android:text="@string/bdate" />
 
     <EditText
         android:id="@+id/etDate"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="date"
         tools:hint="@string/bdate"
-        android:layout_toRightOf="@+id/tvDate"
-        android:layout_alignBottom="@+id/tvDate"
-        android:layout_alignTop="@+id/tvDate"
+        android:layout_below="@+id/tvDate"
         android:text="10/10/2017"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_centerHorizontal="true"
+        android:textAlignment="center"
+        android:background="@drawable/border"
+        />
 
     <TextView
         android:padding="10dp"
         android:id="@+id/tvSort"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/etDate"
-        android:layout_alignLeft="@+id/tvDate"
-        android:layout_alignStart="@+id/tvDate"
+        android:layout_centerHorizontal="true"
+        android:textAlignment="center"
         android:text="@string/sort" />
     <Spinner
         android:id="@+id/spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/tvSort"
-        android:layout_toRightOf="@+id/tvSort"
-        android:textAlignment="center"
-        android:layout_toEndOf="@+id/tvSort"/>
-    <TextView
-        android:paddingTop="30dp"
-        android:id="@+id/tvNews"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/tvSort"
-        android:layout_alignStart="@+id/tvSort"
         android:layout_below="@+id/tvSort"
-        android:text="@string/news" />
+        android:textAlignment="center"
+        android:paddingBottom="10dp"
+        android:background="@drawable/border"
+        />
 
     <LinearLayout
         android:id="@+id/llCheckBox"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_alignTop="@+id/tvNews"
-        android:layout_toRightOf="@+id/tvNews"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
+        android:layout_below="@+id/spinner"
+        android:layout_marginTop="20dp"
+        android:padding="40dp"
+
+        android:background="@drawable/border">
 
         <CheckBox
             android:id="@+id/cbArts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/holo_blue_bright"
+            android:paddingLeft="40dp"
             android:text="@string/arts" />
 
         <CheckBox
             android:id="@+id/cbFashion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/holo_blue_bright"
+            android:paddingLeft="40dp"
             android:text="@string/fashion_style" />
 
         <CheckBox
             android:id="@+id/cbSports"
             android:layout_width="wrap_content"
+            android:background="@android:color/holo_blue_bright"
+            android:paddingLeft="40dp"
             android:layout_height="wrap_content"
             android:text="@string/sports" />
     </LinearLayout>
+    <TextView
+        android:textSize="17sp"
+        android:id="@+id/tvNews"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/spinner"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="15dp"
+        android:background="#ffffff"
+        android:text="@string/news" />
 
     <Button
         android:id="@+id/btnSave"
