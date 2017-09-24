@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -19,7 +20,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.codepath.nytimessearch.R;
-import com.codepath.nytimessearch.adapters.ArticleRecyclerAdapter;
+import com.codepath.nytimessearch.adapters.DocRecyclerAdapter;
 import com.codepath.nytimessearch.adapters.EndlessRecyclerViewScrollListener;
 import com.codepath.nytimessearch.fragments.FilterFragment;
 import com.codepath.nytimessearch.interfaces.FilterDialogListener;
@@ -41,6 +42,7 @@ import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -55,7 +57,8 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
     @BindView(R.id.search_layout)
     RelativeLayout searchLayout;
     ArrayList<Doc> articles;
-    ArticleRecyclerAdapter adapter;
+
+    DocRecyclerAdapter adapter;
     SearchApiEndpointInterface apiService;
     Filter filter;
     int currentPage = 0;
@@ -94,10 +97,12 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
     public void setupViews() {
 
         articles = new ArrayList<>();
-        adapter = new ArticleRecyclerAdapter(this, articles);
+        adapter = new DocRecyclerAdapter(this, articles);
         rvResults.setAdapter(adapter);
 
         StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+
+        staggeredGridLayoutManager.scrollToPosition(0);
         rvResults.setLayoutManager(staggeredGridLayoutManager);
 
         // Retain an instance so that you can call `resetState()` for fresh searches
@@ -112,6 +117,12 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
 
         // Adds the scroll listener to RecyclerView
         rvResults.addOnScrollListener(scrollListener);
+
+        rvResults.setItemAnimator(new SlideInUpAnimator());
+
+        RecyclerView.ItemDecoration itemDecoration = new
+                DividerItemDecoration(rvResults.getContext(), DividerItemDecoration.VERTICAL);
+        rvResults.addItemDecoration(itemDecoration);
 
         ItemClickSupport.addTo(rvResults).setOnItemClickListener(
                 (recyclerView, position, v) -> {
@@ -259,7 +270,10 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                 }
                 QueryResult queryResult = response.body();
                 List<Doc> docs = queryResult.getResponse().getDocs();
-                if (isNew) articles.clear();
+                if (isNew){
+                    articles.clear();
+                    rvResults.scrollToPosition(0);
+                }
                 // add new data
                 articles.addAll(docs);
                 // Notify the adapter of the update

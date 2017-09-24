@@ -3,18 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/border"
+    android:background="@drawable/border_doc"
     android:orientation="vertical"
     android:paddingBottom="5dp"
     android:paddingTop="5dp">
-
-    <ImageView
-        android:id="@+id/ivImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:scaleType="fitXY"
-        android:src="@mipmap/ic_launcher" />
 
     <TextView
         android:id="@+id/tvTitle"
@@ -23,6 +15,7 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:padding="2sp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@android:color/black"
         tools:text="title" />
 
@@ -43,7 +36,6 @@
         android:padding="2sp"
         android:textAlignment="center"
         tools:text="category" />
-
 
     <TextView
         android:id="@+id/tvSnippet"
