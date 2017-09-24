@@ -1,10 +1,16 @@
 package com.codepath.nytimessearch.activities;
 
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -127,12 +133,42 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         ItemClickSupport.addTo(rvResults).setOnItemClickListener(
                 (recyclerView, position, v) -> {
                     //create intent
+             /*   tranfer to detail activity which use webview to show article
                     Intent intent = new Intent(getApplicationContext(), ArticleActivity.class);
                     //get article
                     Doc article = articles.get(position);
                     intent.putExtra("article", article);
                     //launch activity
                     startActivity(intent);
+                    */
+             /* use chrome tab */
+                    String url = articles.get(position).getWebUrl();
+                    CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+
+// set toolbar color and/or setting custom actions before invoking build()
+                    builder.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent));
+                    builder.addDefaultShareMenuItem();
+
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_share_black_24dp);
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("text/plain");
+                    intent.putExtra(Intent.EXTRA_TEXT, url);
+
+                    int requestCode = 100;
+
+                    PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                            requestCode,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+
+                    builder.setActionButton(bitmap, "Share Link", pendingIntent, true);
+
+
+// Once ready, call CustomTabsIntent.Builder.build() to create a CustomTabsIntent
+                    CustomTabsIntent customTabsIntent = builder.build();
+// and launch the desired Url with CustomTabsIntent.launchUrl()
+                    customTabsIntent.launchUrl(this, Uri.parse(url));
+
                 }
         );
 
@@ -221,7 +257,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         data.put("api-key", "9a01eed7f83a4928bc5949886e052166");
         data.put("page", String.valueOf(page));
         data.put("q", query);
-
+        Log.d("DEBUG", "page:" + String.valueOf(page) + ",query:" + query);
         if (ft.getSort() != null && !ft.getSort().isEmpty()) {
             data.put("sort", ft.getSort());
         }
@@ -230,8 +266,8 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         }
         String extraQuery;
         if (!filter.getFashionStyle() && !filter.getArt() && !filter.getSports()) {
-            extraQuery ="";
-        }else {
+            extraQuery = "";
+        } else {
             StringBuilder sb = new StringBuilder();
             sb.append("news_desk:(");
             if (filter.getSports()) {
@@ -254,10 +290,8 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         //call Retrofit api
         Call<QueryResult> call = apiService.getResult(data);
 
-        APIHelper.enqueueWithRetry(call ,5,new Callback<QueryResult>() {
-
-  //      call.enqueue(new Callback<QueryResult>() {
-
+        APIHelper.enqueueWithRetry(call, 5, new Callback<QueryResult>() {
+            //      call.enqueue(new Callback<QueryResult>() {
             @Override
             public void onResponse(Call<QueryResult> call, Response<QueryResult> response) {
                 int statusCode = response.code();
@@ -270,7 +304,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                 }
                 QueryResult queryResult = response.body();
                 List<Doc> docs = queryResult.getResponse().getDocs();
-                if (isNew){
+                if (isNew) {
                     articles.clear();
                     rvResults.scrollToPosition(0);
                 }
@@ -283,12 +317,11 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                     scrollListener.resetState();
                     progressDialog.dismiss();
                 }
-                if(articles.isEmpty()) {
-                    Toast.makeText(SearchActivity.this, "No result found!!!",Toast.LENGTH_LONG).show();
+                if (articles.isEmpty()) {
+                    Toast.makeText(SearchActivity.this, "No result found!!!", Toast.LENGTH_LONG).show();
                 } else {
                     currentPage++;
                 }
-
             }
 
             @Override
