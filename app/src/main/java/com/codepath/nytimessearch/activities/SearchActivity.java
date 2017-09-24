@@ -27,6 +27,7 @@ import com.codepath.nytimessearch.interfaces.SearchApiEndpointInterface;
 import com.codepath.nytimessearch.models.Doc;
 import com.codepath.nytimessearch.models.Filter;
 import com.codepath.nytimessearch.models.QueryResult;
+import com.codepath.nytimessearch.networks.APIHelper;
 import com.codepath.nytimessearch.networks.NetworkUtils;
 import com.codepath.nytimessearch.utils.ItemClickSupport;
 import com.google.gson.Gson;
@@ -239,38 +240,40 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         //call Retrofit api
         Call<QueryResult> call = apiService.getResult(data);
 
+        APIHelper.enqueueWithRetry(call ,5,new Callback<QueryResult>() {
 
-            call.enqueue(new Callback<QueryResult>() {
-                @Override
-                public void onResponse(Call<QueryResult> call, Response<QueryResult> response) {
-                    int statusCode = response.code();
-                    Log.d("DEBUG", "response code:" + String.valueOf(statusCode));
-                    if (statusCode != 200) {
-                        Toast.makeText(SearchActivity.this, "Search failed!", Toast.LENGTH_LONG).show();
+  //      call.enqueue(new Callback<QueryResult>() {
 
-                        return;
-                    }
-                    QueryResult queryResult = response.body();
-                    List<Doc> docs = queryResult.getResponse().getDocs();
-                    if (isNew) articles.clear();
-                    // add new data
-                    articles.addAll(docs);
-                    // Notify the adapter of the update
-                    adapter.notifyDataSetChanged();
-                    //Reset endless scroll listener when performing a new search
-                    if (isNew) {
-                        scrollListener.resetState();
-                        progressDialog.dismiss();
-                    }
-                    currentPage++;
+            @Override
+            public void onResponse(Call<QueryResult> call, Response<QueryResult> response) {
+                int statusCode = response.code();
+                Log.d("DEBUG", "response code:" + String.valueOf(statusCode));
+                if (statusCode != 200) {
+                    Toast.makeText(SearchActivity.this, "Search failed!", Toast.LENGTH_LONG).show();
+
+                    return;
                 }
-
-                @Override
-                public void onFailure(Call<QueryResult> call, Throwable t) {
-                    Toast.makeText(SearchActivity.this, "could not load content. check your network!", Toast.LENGTH_LONG).show();
-                    // Log error here since request failed
+                QueryResult queryResult = response.body();
+                List<Doc> docs = queryResult.getResponse().getDocs();
+                if (isNew) articles.clear();
+                // add new data
+                articles.addAll(docs);
+                // Notify the adapter of the update
+                adapter.notifyDataSetChanged();
+                //Reset endless scroll listener when performing a new search
+                if (isNew) {
+                    scrollListener.resetState();
+                    progressDialog.dismiss();
                 }
-            });
+                currentPage++;
+            }
+
+            @Override
+            public void onFailure(Call<QueryResult> call, Throwable t) {
+                Toast.makeText(SearchActivity.this, "could not load content. check your network!", Toast.LENGTH_LONG).show();
+                // Log error here since request failed
+            }
+        });
 
     }
 
