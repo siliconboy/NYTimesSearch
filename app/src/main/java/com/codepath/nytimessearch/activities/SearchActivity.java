@@ -149,7 +149,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                     builder.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent));
                     builder.addDefaultShareMenuItem();
 
-                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_share_black_24dp);
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_name);
                     Intent intent = new Intent(Intent.ACTION_SEND);
                     intent.setType("text/plain");
                     intent.putExtra(Intent.EXTRA_TEXT, url);
