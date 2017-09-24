@@ -63,7 +63,7 @@
             android:id="@+id/cbArts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:color/holo_blue_bright"
+            android:textColor="@android:color/holo_orange_dark"
             android:paddingLeft="40dp"
             android:text="@string/arts" />
 
@@ -71,16 +71,16 @@
             android:id="@+id/cbFashion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@android:color/holo_blue_bright"
+            android:textColor="@android:color/holo_orange_dark"
             android:paddingLeft="40dp"
             android:text="@string/fashion_style" />
 
         <CheckBox
             android:id="@+id/cbSports"
             android:layout_width="wrap_content"
-            android:background="@android:color/holo_blue_bright"
             android:paddingLeft="40dp"
             android:layout_height="wrap_content"
+            android:textColor="@android:color/holo_orange_dark"
             android:text="@string/sports" />
     </LinearLayout>
     <TextView

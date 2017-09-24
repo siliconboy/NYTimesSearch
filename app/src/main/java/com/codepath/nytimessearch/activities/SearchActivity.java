@@ -30,6 +30,7 @@ import com.codepath.nytimessearch.models.QueryResult;
 import com.codepath.nytimessearch.networks.APIHelper;
 import com.codepath.nytimessearch.networks.NetworkUtils;
 import com.codepath.nytimessearch.utils.ItemClickSupport;
+import com.codepath.nytimessearch.utils.MyUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -213,26 +214,28 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
         if (ft.getSort() != null && !ft.getSort().isEmpty()) {
             data.put("sort", ft.getSort());
         }
-        if (ft.getBeginDate() != null && ft.getBeginDate().isEmpty()) {
-            data.put("begin_date", ft.getBeginDate());
+        if (ft.getBeginDate() != null && !ft.getBeginDate().isEmpty()) {
+            data.put("begin_date", MyUtils.convertMDYToYMD(ft.getBeginDate()));
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append("news_desk:(");
-        if (filter.getSports()) {
-            sb.append("\"Sports\"");
-        }
-        if (filter.getFashionStyle()) {
-            sb.append(" \"Fashion & Style\"");
-        }
-        if (filter.getArt()) {
-            sb.append(" \"Arts\"");
-        }
-        sb.append(")");
+        String extraQuery;
         if (!filter.getFashionStyle() && !filter.getArt() && !filter.getSports()) {
+            extraQuery ="";
+        }else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("news_desk:(");
+            if (filter.getSports()) {
+                sb.append("\"Sports\" ");
+            }
+            if (filter.getFashionStyle()) {
+                sb.append("\"Fashion & Style\" ");
+            }
+            if (filter.getArt()) {
+                sb.append("\"Arts\" ");
+            }
+            sb.replace(sb.length() - 1, sb.length(), ")");
 
-            sb.setLength(0);
+            extraQuery = sb.toString();
         }
-        String extraQuery = sb.toString();
 
         if (!extraQuery.isEmpty()) {
             data.put("fq", extraQuery);
@@ -248,6 +251,7 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
             public void onResponse(Call<QueryResult> call, Response<QueryResult> response) {
                 int statusCode = response.code();
                 Log.d("DEBUG", "response code:" + String.valueOf(statusCode));
+                //Log.d("DEBUG", "body:" + response.toString());
                 if (statusCode != 200) {
                     Toast.makeText(SearchActivity.this, "Search failed!", Toast.LENGTH_LONG).show();
 
@@ -265,7 +269,12 @@ public class SearchActivity extends AppCompatActivity implements FilterDialogLis
                     scrollListener.resetState();
                     progressDialog.dismiss();
                 }
-                currentPage++;
+                if(articles.isEmpty()) {
+                    Toast.makeText(SearchActivity.this, "No result found!!!",Toast.LENGTH_LONG).show();
+                } else {
+                    currentPage++;
+                }
+
             }
 
             @Override

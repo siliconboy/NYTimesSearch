@@ -124,20 +124,18 @@ public class FilterFragment extends DialogFragment implements View.OnClickListen
         mBeginDate.setOnClickListener(this);
         //solve two click issue for edittext field.
         mBeginDate.setFocusable(false);
-        SimpleDateFormat ft = new SimpleDateFormat("MM/dd/yyyy", Locale.US);
 
-        Date pDate = null;
-        try {
-            if (mFilter.getBeginDate() != null && !mFilter.getBeginDate().isEmpty())
-                pDate = ft.parse(mFilter.getBeginDate());
-        } catch (ParseException e) {
-            e.printStackTrace();
+        String pDate = mFilter.getBeginDate();
+        SimpleDateFormat ft = new SimpleDateFormat("MM/dd/yyyy", Locale.US);
+        String[] mdys=null;
+        if(pDate!=null && !pDate.isEmpty()){
+            mdys= pDate.split("/");
         }
 
         Calendar newCalendar = Calendar.getInstance();
-        int year = pDate == null ? newCalendar.get(Calendar.YEAR) : pDate.getYear();
-        int month = pDate == null ? newCalendar.get(Calendar.MONTH) : pDate.getMonth();
-        int dayofmonth = pDate == null ? newCalendar.get(Calendar.DAY_OF_MONTH) : pDate.getDay();
+        int year = pDate == null ? newCalendar.get(Calendar.YEAR) : Integer.valueOf(mdys[2]);
+        int month = pDate == null ? newCalendar.get(Calendar.MONTH) : Integer.valueOf(mdys[0])-1;
+        int dayofmonth = pDate == null ? newCalendar.get(Calendar.DAY_OF_MONTH) : Integer.valueOf(mdys[1]);
 
         dueDatePickerDialog = new DatePickerDialog(this.getContext(), (view1, year1, month1, dayOfMonth) -> {
 
